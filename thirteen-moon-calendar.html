@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Thirteen Moon Calendar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600&display=swap');
+
+  :root{
+    --ink:#1a1206;
+    --gold:#c9a227;
+    --gold-dim:#8a6f1c;
+    --parch:#f4ead2;
+    --parch-deep:#e8d9b0;
+    --shadow:rgba(40,26,4,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Cormorant Garamond',serif;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(201,162,39,.10), transparent 60%),
+      radial-gradient(circle at 20% 80%, rgba(138,111,28,.08), transparent 55%),
+      #15100a;
+    color:var(--parch);
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:32px 18px;
+    line-height:1.4;
+  }
+  .frame{
+    width:100%;max-width:560px;
+    background:linear-gradient(170deg,#1f160c,#120c06);
+    border:1px solid var(--gold-dim);
+    box-shadow:0 30px 80px var(--shadow), inset 0 0 70px rgba(0,0,0,.5);
+    padding:44px 38px 40px;
+    position:relative;
+  }
+  .frame::before{
+    content:"";position:absolute;inset:9px;
+    border:1px solid rgba(201,162,39,.25);
+    pointer-events:none;
+  }
+  .sigil{
+    text-align:center;font-size:30px;color:var(--gold);
+    letter-spacing:.4em;margin-bottom:10px;
+  }
+  h1{
+    font-family:'Cinzel',serif;font-weight:600;
+    text-align:center;color:var(--gold);
+    font-size:24px;letter-spacing:.18em;line-height:1.25;
+    text-transform:uppercase;
+  }
+  .sub{
+    text-align:center;font-style:italic;color:var(--parch-deep);
+    opacity:.7;font-size:16px;margin:8px 0 30px;
+  }
+  label{
+    display:block;font-family:'Cinzel',serif;font-size:11px;
+    letter-spacing:.22em;text-transform:uppercase;
+    color:var(--gold);opacity:.85;margin-bottom:8px;text-align:center;
+  }
+  input[type=date]{
+    width:100%;background:#0d0904;color:var(--parch);
+    border:1px solid var(--gold-dim);padding:12px 14px;
+    font-family:'Cormorant Garamond',serif;font-size:18px;
+    text-align:center;outline:none;
+  }
+  input[type=date]:focus{border-color:var(--gold)}
+  input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) hue-rotate(5deg)}
+
+  .divider{
+    text-align:center;color:var(--gold);opacity:.5;
+    margin:26px 0;letter-spacing:.5em;font-size:14px;
+  }
+  .result{text-align:center;animation:rise .5s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .moon-name{
+    font-family:'Cinzel',serif;color:var(--gold);
+    font-size:30px;letter-spacing:.08em;margin-bottom:2px;
+  }
+  .day-line{font-size:22px;color:var(--parch)}
+  .day-line .num{color:var(--gold);font-weight:600}
+  .ordinal{font-style:italic;opacity:.65;font-size:17px;margin-top:6px}
+  .note{
+    margin-top:18px;padding-top:16px;
+    border-top:1px solid rgba(201,162,39,.2);
+    font-style:italic;opacity:.75;font-size:16px;
+  }
+  .offday{
+    color:var(--gold);font-family:'Cinzel',serif;
+    font-size:26px;letter-spacing:.1em;
+  }
+  .drift{
+    margin-top:24px;font-size:13px;opacity:.5;text-align:center;
+    font-style:italic;line-height:1.5;
+  }
+
+  /* toggle */
+  .toggle{
+    display:flex;border:1px solid var(--gold-dim);margin-bottom:28px;
+  }
+  .toggle button{
+    flex:1;background:#0d0904;color:var(--parch-deep);
+    border:none;cursor:pointer;padding:11px 6px;
+    font-family:'Cinzel',serif;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;transition:all .25s;
+  }
+  .toggle button.active{background:var(--gold);color:#15100a;font-weight:600}
+  .toggle button:first-child{border-right:1px solid var(--gold-dim)}
+
+  /* select / number inputs */
+  select, input[type=number]{
+    width:100%;background:#0d0904;color:var(--parch);
+    border:1px solid var(--gold-dim);padding:12px 14px;
+    font-family:'Cormorant Garamond',serif;font-size:18px;
+    text-align:center;outline:none;-webkit-appearance:none;appearance:none;
+  }
+  select:focus, input[type=number]:focus{border-color:var(--gold)}
+  select option{background:#15100a}
+  .row{display:flex;gap:12px}
+  .row > div{flex:1}
+  .field{margin-bottom:18px}
+  .hidden{display:none}
+  .gdate{
+    font-family:'Cinzel',serif;color:var(--gold);
+    font-size:30px;letter-spacing:.04em;margin-bottom:4px;
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="sigil">☾ ◯ ☽</div>
+    <h1>The Thirteen<br>Moon Calendar</h1>
+    <p class="sub">a year of thirteen moons, anchored to the winter solstice</p>
+
+    <div class="toggle">
+      <button id="tabFwd" class="active">Date → Moon</button>
+      <button id="tabRev">Moon → Date</button>
+    </div>
+
+    <!-- forward -->
+    <div id="panelFwd">
+      <label for="g">Choose a common-reckoning date</label>
+      <input type="date" id="g">
+    </div>
+
+    <!-- reverse -->
+    <div id="panelRev" class="hidden">
+      <div class="field">
+        <label for="moonSel">Moon</label>
+        <select id="moonSel"></select>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="daySel">Day (1–28)</label>
+          <input type="number" id="daySel" min="1" max="28" value="1">
+        </div>
+        <div class="field">
+          <label for="yearSel">Ceremonial year</label>
+          <input type="number" id="yearSel" value="2026">
+        </div>
+      </div>
+      <label style="opacity:.6;text-transform:none;font-style:italic;letter-spacing:0;font-family:'Cormorant Garamond',serif;font-size:14px">
+        …or choose <span id="hollowBtn" style="color:var(--gold);cursor:pointer;text-decoration:underline">the Hollow</span> (the off-day)
+      </label>
+    </div>
+
+
+    <div class="divider">· · ·</div>
+
+    <div class="result" id="out"></div>
+
+    <p class="drift" id="drift"></p>
+  </div>
+
+<script>
+/* ---- Calendar definition ----
+   - 13 months ("moons") of 28 days each = 364 days
+   - 1 off-day ("the Hollow") = the winter solstice itself
+   - Year begins the day AFTER the winter solstice
+   - Solstice fixed at Dec 21 (drift accepted; no leap day)
+*/
+const MOONS = ["Yule Moon","Wolf Moon","Snow Moon","Worm Moon","Pink Moon",
+  "Flower Moon","Strawberry Moon","Buck Moon","Sturgeon Moon","Corn Moon",
+  "Hunter's Moon","Beaver Moon","Cold Moon"];
+
+const out   = document.getElementById('out');
+const drift = document.getElementById('drift');
+const inp   = document.getElementById('g');
+
+function ord(n){
+  const s=["th","st","nd","rd"], v=n%100;
+  return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+
+function convert(date){
+  const y = date.getFullYear();
+  // Solstice (off-day) for the year-cycle this date belongs to.
+  // A new ceremonial year starts Dec 22. So dates Dec 22..Dec 31 belong to year y's cycle;
+  // Jan 1..Dec 20 belong to the previous solstice (year y-1); Dec 21 is the off-day of year y.
+  const solstice = m => new Date(m,11,21);   // Dec 21 of given year
+
+  const thisSol = solstice(y);
+  if(sameDay(date,thisSol)){
+    return {off:true, year:y};
+  }
+
+  // Which cycle? If on/after Dec 22, anchor = this year's solstice; else previous year's.
+  let anchor;
+  if(date > thisSol){ anchor = thisSol; }
+  else { anchor = solstice(y-1); }
+
+  const dayOne = new Date(anchor); dayOne.setDate(dayOne.getDate()+1); // day after solstice
+  const diff = Math.floor((date - dayOne)/86400000); // 0-based day index
+
+  const moonIdx = Math.floor(diff/28);
+  const dayNum  = (diff%28)+1;
+  return {off:false, moon:MOONS[moonIdx], moonNum:moonIdx+1, day:dayNum, dayOfYear:diff+1};
+}
+
+function sameDay(a,b){
+  return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+}
+
+function render(){
+  const v = inp.value;
+  if(!v){ out.innerHTML='<p style="opacity:.5;font-style:italic">— awaiting a date —</p>'; drift.textContent=''; return; }
+  const [Y,M,D]=v.split('-').map(Number);
+  const date=new Date(Y,M-1,D);
+  const r=convert(date);
+
+  if(r.off){
+    out.innerHTML=`
+      <div class="offday">The Hollow</div>
+      <p class="ordinal">the off-day · winter solstice</p>
+      <p class="note">Outside all moons. The turning point of the dark, belonging to no month.</p>`;
+  }else{
+    out.innerHTML=`
+      <div class="moon-name">${r.moon}</div>
+      <p class="day-line">Day <span class="num">${r.day}</span> of <span class="num">28</span></p>
+      <p class="ordinal">${ord(r.moonNum)} moon · ${ord(r.dayOfYear)} day of the year</p>`;
+  }
+  drift.textContent="The solstice is fixed at 21 December and no leap day is kept, so this calendar drifts about one day later every four years against the true sun.";
+}
+
+inp.addEventListener('change',render);
+// default to today
+const t=new Date();
+inp.value=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+
+/* ---- Reverse: Moon → Gregorian ---- */
+const moonSel=document.getElementById('moonSel');
+const daySel=document.getElementById('daySel');
+const yearSel=document.getElementById('yearSel');
+const hollowBtn=document.getElementById('hollowBtn');
+let hollowMode=false;
+
+MOONS.forEach((m,i)=>{
+  const o=document.createElement('option');
+  o.value=i; o.textContent=`${ord(i+1)} — ${m}`;
+  moonSel.appendChild(o);
+});
+yearSel.value=t.getFullYear();
+
+function fmtDate(d){
+  return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+function renderRev(){
+  // Ceremonial year N begins the day after the Dec-21 solstice of common year N.
+  const cy=parseInt(yearSel.value,10);
+  if(isNaN(cy)){out.innerHTML='<p style="opacity:.5;font-style:italic">— enter a year —</p>';drift.textContent='';return;}
+  const dayOne=new Date(cy,11,22); // Dec 22 of common year = Day 1 of ceremonial year
+
+  if(hollowMode){
+    const hollow=new Date(cy+1,11,21); // the off-day closes the cycle: next Dec 21
+    out.innerHTML=`
+      <div class="gdate">${fmtDate(hollow)}</div>
+      <p class="ordinal">The Hollow · the off-day that closes ceremonial year ${cy}</p>
+      <p class="note">The winter solstice. Day 364 of the year is followed by the Hollow, then the next year's Yule Moon begins.</p>`;
+    drift.textContent=driftMsg;
+    return;
+  }
+
+  const moonIdx=parseInt(moonSel.value,10);
+  let day=parseInt(daySel.value,10);
+  if(isNaN(day)||day<1)day=1; if(day>28)day=28;
+  const offset=moonIdx*28+(day-1);
+  const result=new Date(dayOne); result.setDate(result.getDate()+offset);
+  out.innerHTML=`
+    <div class="gdate">${fmtDate(result)}</div>
+    <p class="ordinal">${MOONS[moonIdx]}, day ${day} · ceremonial year ${cy}</p>`;
+  drift.textContent=driftMsg;
+}
+
+const driftMsg="The solstice is fixed at 21 December and no leap day is kept, so this calendar drifts about one day later every four years against the true sun.";
+
+[moonSel,daySel,yearSel].forEach(el=>el.addEventListener('input',()=>{hollowMode=false;hollowBtn.style.opacity=1;renderRev();}));
+hollowBtn.addEventListener('click',()=>{hollowMode=true;renderRev();});
+
+/* ---- Toggle ---- */
+const tabFwd=document.getElementById('tabFwd'),tabRev=document.getElementById('tabRev');
+const panelFwd=document.getElementById('panelFwd'),panelRev=document.getElementById('panelRev');
+tabFwd.addEventListener('click',()=>{
+  tabFwd.classList.add('active');tabRev.classList.remove('active');
+  panelFwd.classList.remove('hidden');panelRev.classList.add('hidden');
+  render();
+});
+tabRev.addEventListener('click',()=>{
+  tabRev.classList.add('active');tabFwd.classList.remove('active');
+  panelRev.classList.remove('hidden');panelFwd.classList.add('hidden');
+  hollowMode=false;renderRev();
+});
+
+render();
+</script>
+</body>
+</html>
