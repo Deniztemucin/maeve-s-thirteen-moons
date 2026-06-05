@@ -1,1 +1,1 @@
-# maeve-s-thirteen-moons
+# maeve-thirteen-moon-calendar
